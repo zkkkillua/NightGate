@@ -1,0 +1,199 @@
+<UserControl x:Class="NightGate.Desktop.Views.ScheduleLadderView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:NightGate.Desktop"
+             xmlns:primitives="clr-namespace:System.Windows.Controls.Primitives;assembly=PresentationFramework"
+             AutomationProperties.Name="作息阶梯说明"
+             UseLayoutRounding="True"
+             SnapsToDevicePixels="True">
+    <StackPanel>
+        <Border Style="{StaticResource CardStyle}"
+                Background="{StaticResource SuccessCardBrush}">
+            <StackPanel>
+                <DockPanel LastChildFill="False">
+                    <StackPanel DockPanel.Dock="Left">
+                        <TextBlock Text="{Binding ScheduleLadder.CurrentStepHeading}"
+                                   FontSize="22"
+                                   FontWeight="SemiBold"
+                                   AutomationProperties.Name="当前作息台阶" />
+                        <TextBlock Margin="0,6,0,0"
+                                   Text="{Binding ScheduleLadder.AutomaticProgressionText}"
+                                   Foreground="{StaticResource SecondaryTextBrush}"
+                                   TextWrapping="Wrap"
+                                   AutomationProperties.Name="台阶不是四选一" />
+                    </StackPanel>
+                    <Border DockPanel.Dock="Right"
+                            Margin="16,0,0,0"
+                            VerticalAlignment="Top"
+                            Style="{StaticResource StatusPillStyle}">
+                        <TextBlock Text="自动渐进"
+                                   FontWeight="SemiBold"
+                                   Foreground="{StaticResource AccentBrush}" />
+                    </Border>
+                </DockPanel>
+
+                <Border Margin="0,16,0,0"
+                        Padding="12,8"
+                        CornerRadius="8"
+                        Background="{StaticResource CardBackgroundBrush}">
+                    <TextBlock Text="{Binding ScheduleLadder.TonightContextText}"
+                               FontWeight="SemiBold"
+                               TextWrapping="Wrap"
+                               AutomationProperties.Name="今晚采用的作息规则" />
+                </Border>
+
+                <ItemsControl Margin="-4,10,-4,0"
+                              ItemsSource="{Binding ScheduleLadder.TonightMilestones}"
+                              AutomationProperties.Name="默认最晚开新一局、锁屏、关灯和起床时间">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <primitives:UniformGrid Columns="2" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Margin="4"
+                                    Padding="12"
+                                    CornerRadius="10"
+                                    Background="{StaticResource CardBackgroundBrush}">
+                                <StackPanel>
+                                    <TextBlock Text="{Binding TimeText}"
+                                               FontSize="22"
+                                               FontWeight="SemiBold"
+                                               Foreground="{StaticResource AccentBrush}" />
+                                    <TextBlock Margin="0,3,0,0"
+                                               Text="{Binding Label}"
+                                               FontWeight="SemiBold"
+                                               TextWrapping="Wrap" />
+                                    <TextBlock Margin="0,5,0,0"
+                                               Text="{Binding HelpText}"
+                                               FontSize="12"
+                                               Foreground="{StaticResource SecondaryTextBrush}"
+                                               TextWrapping="Wrap" />
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <TextBlock Margin="0,12,0,0"
+                           Text="{Binding ScheduleLadder.DefaultLastStartHelpText}"
+                           FontSize="12"
+                           Foreground="{StaticResource SecondaryTextBrush}"
+                           TextWrapping="Wrap"
+                           AutomationProperties.Name="不同游戏的最后开局说明" />
+            </StackPanel>
+        </Border>
+
+        <TextBlock Margin="2,18,0,8"
+                   Text="四级路线"
+                   FontSize="18"
+                   FontWeight="SemiBold" />
+        <ItemsControl Margin="-4,0"
+                      ItemsSource="{Binding ScheduleLadder.Steps}"
+                      AutomationProperties.Name="四级作息路线">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <primitives:UniformGrid Columns="2" />
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <Border Margin="4">
+                        <Border.Style>
+                            <Style TargetType="Border" BasedOn="{StaticResource CardStyle}">
+                                <Setter Property="Padding" Value="14" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding State}"
+                                                 Value="{x:Static local:DesktopScheduleLadderStepState.Current}">
+                                        <Setter Property="Background" Value="{StaticResource SuccessCardBrush}" />
+                                        <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                                        <Setter Property="BorderThickness" Value="2" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding State}"
+                                                 Value="{x:Static local:DesktopScheduleLadderStepState.Next}">
+                                        <Setter Property="Background" Value="{StaticResource InfoCardBrush}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding State}"
+                                                 Value="{x:Static local:DesktopScheduleLadderStepState.Completed}">
+                                        <Setter Property="Opacity" Value="0.72" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <StackPanel>
+                            <DockPanel LastChildFill="False">
+                                <TextBlock DockPanel.Dock="Left"
+                                           Text="{Binding Number, StringFormat=第 {0} 阶}"
+                                           FontWeight="SemiBold" />
+                                <Border DockPanel.Dock="Right"
+                                        Padding="7,3"
+                                        CornerRadius="8"
+                                        Background="{StaticResource InfoCardBrush}">
+                                    <TextBlock Text="{Binding StatusText}"
+                                               FontSize="11"
+                                               FontWeight="SemiBold" />
+                                </Border>
+                            </DockPanel>
+                            <TextBlock Margin="0,8,0,0"
+                                       Text="{Binding Name}"
+                                       FontSize="17"
+                                       FontWeight="SemiBold" />
+                            <TextBlock Margin="0,4,0,10"
+                                       MinHeight="34"
+                                       Text="{Binding Description}"
+                                       FontSize="12"
+                                       Foreground="{StaticResource SecondaryTextBrush}"
+                                       TextWrapping="Wrap" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="最后开局" FontSize="11" Foreground="{StaticResource SecondaryTextBrush}" />
+                                <TextBlock Grid.Row="0" Grid.Column="1" Text="锁屏" FontSize="11" Foreground="{StaticResource SecondaryTextBrush}" />
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="{Binding LastStartText}" FontWeight="SemiBold" />
+                                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding LockText}" FontWeight="SemiBold" />
+                                <TextBlock Grid.Row="2" Grid.Column="0" Margin="0,7,0,0" Text="关灯" FontSize="11" Foreground="{StaticResource SecondaryTextBrush}" />
+                                <TextBlock Grid.Row="2" Grid.Column="1" Margin="0,7,0,0" Text="起床" FontSize="11" Foreground="{StaticResource SecondaryTextBrush}" />
+                                <TextBlock Grid.Row="3" Grid.Column="0" Text="{Binding LightsOutText}" FontWeight="SemiBold" />
+                                <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding WakeText}" FontWeight="SemiBold" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <Border Margin="0,14,0,0"
+                Style="{StaticResource CardStyle}"
+                Background="{StaticResource InfoCardBrush}">
+            <StackPanel>
+                <TextBlock Text="怎样进入下一阶"
+                           FontSize="18"
+                           FontWeight="SemiBold" />
+                <TextBlock Margin="0,9,0,0"
+                           Text="{Binding ScheduleLadder.ProgressionRuleText}"
+                           FontSize="16"
+                           FontWeight="SemiBold"
+                           TextWrapping="Wrap"
+                           AutomationProperties.Name="台阶晋级规则" />
+                <TextBlock Margin="0,8,0,0"
+                           Text="{Binding ScheduleLadder.ProgressionDefinitionText}"
+                           Foreground="{StaticResource SecondaryTextBrush}"
+                           TextWrapping="Wrap" />
+                <TextBlock Margin="0,8,0,0"
+                           Text="{Binding ScheduleLadder.ProgressionSafetyText}"
+                           FontWeight="SemiBold"
+                           Foreground="{StaticResource AccentBrush}"
+                           TextWrapping="Wrap" />
+            </StackPanel>
+        </Border>
+    </StackPanel>
+</UserControl>

@@ -1,0 +1,47 @@
+:root {
+  color-scheme: light;
+  font-family: "Segoe UI", "Microsoft YaHei UI", sans-serif;
+  background: #f3f0e8;
+  color: #20302b;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  display: grid;
+  place-items: center;
+  padding: 32px 18px;
+  background: radial-gradient(circle at top, #fffdf7 0, #f3f0e8 55%, #e8ede8 100%);
+}
+
+.card {
+  width: min(560px, 100%);
+  padding: 40px;
+  border: 1px solid #d8ded7;
+  border-radius: 24px;
+  background: rgba(255, 255, 252, .94);
+  box-shadow: 0 18px 60px rgba(37, 58, 50, .10);
+}
+
+.card.wide { width: min(680px, 100%); }
+.eyebrow { margin: 0; color: #587267; letter-spacing: .18em; font-weight: 700; }
+h1 { margin: 8px 0 14px; font-size: clamp(2rem, 6vw, 3.2rem); font-weight: 650; }
+h2 { margin-bottom: 8px; font-size: 1.05rem; }
+.lead { font-size: 1.08rem; line-height: 1.75; color: #40554d; }
+.muted { color: #6f7d78; line-height: 1.6; }
+.status, aside { margin: 24px 0; padding: 18px; border-radius: 16px; background: #eef4ef; }
+.dot { display: inline-block; width: 9px; height: 9px; margin-right: 9px; border-radius: 50%; background: #66887a; }
+fieldset { margin: 0 0 20px; padding: 0; border: 0; }
+legend { margin-bottom: 12px; font-weight: 650; }
+.site-list { display: grid; gap: 10px; }
+.site-row { display: flex; gap: 12px; align-items: center; padding: 13px 14px; border: 1px solid #dfe5df; border-radius: 13px; }
+.site-row:has(input:checked) { border-color: #729384; background: #f2f7f3; }
+input { width: 18px; height: 18px; accent-color: #54796a; }
+button { border: 0; border-radius: 12px; padding: 12px 20px; background: #365e50; color: white; font: inherit; font-weight: 650; cursor: pointer; }
+button:hover { background: #284b3f; }
+
+@media (max-width: 520px) {
+  .card { padding: 28px 22px; border-radius: 18px; }
+}

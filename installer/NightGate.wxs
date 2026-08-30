@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util">
+  <?define StageDir = "$(var.StageDir)" ?>
+
+  <!-- Package.ps1 renders ProductVersion and its stable ProductCode together.
+       Direct WiX builds must explicitly define both values. -->
+  <Package Name="收尾 NightGate"
+           Manufacturer="NightGate"
+           ProductCode="$(var.ProductCode)"
+           Version="$(var.ProductVersion)"
+           UpgradeCode="{B2D91E43-3320-4F82-AE8B-6D4A8769E066}"
+           Language="2052"
+           Scope="perMachine"
+           Platform="x64"
+           InstallerVersion="500">
+    <SummaryInformation Description="NightGate Win11 early-sleep commitment tool" />
+    <MajorUpgrade Schedule="afterInstallExecute"
+                  DowngradeErrorMessage="已安装更新版本的 NightGate。" />
+    <Property Id="NIGHTGATEWINDOWSBUILD" Secure="yes">
+      <RegistrySearch Id="NightGateWindowsBuild"
+                      Root="HKLM"
+                      Key="SOFTWARE\Microsoft\Windows NT\CurrentVersion"
+                      Name="CurrentBuildNumber"
+                      Type="raw"
+                      Bitness="always64" />
+    </Property>
+    <Property Id="NIGHTGATEPRODUCTTYPE" Secure="yes">
+      <RegistrySearch Id="NightGateProductType"
+                      Root="HKLM"
+                      Key="SYSTEM\CurrentControlSet\Control\ProductOptions"
+                      Name="ProductType"
+                      Type="raw"
+                      Bitness="always64" />
+    </Property>
+    <Launch Condition="Installed OR (NIGHTGATEWINDOWSBUILD &gt;= 22000 AND NIGHTGATEPRODUCTTYPE = &quot;WinNT&quot;)"
+            Message="NightGate 需要 Windows 11 build 22000 或更高版本。" />
+    <Launch Condition="NOT RollbackDisabled"
+            Message="NightGate requires Windows Installer rollback to be enabled." />
+    <MediaTemplate EmbedCab="yes" CompressionLevel="high" />
+    <Icon Id="NightGateProductIcon"
+          SourceFile="$(var.StageDir)\apps\Desktop\NightGate.ico" />
+    <Property Id="ARPPRODUCTICON" Value="NightGateProductIcon" />
+    <Property Id="INSTALLDESKTOPSHORTCUT" Value="1" Secure="yes" />
+
+    <StandardDirectory Id="ProgramMenuFolder" />
+    <StandardDirectory Id="DesktopFolder" />
+
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="NightGate">
+        <Directory Id="INSTALLERFOLDER" Name="installer" />
+        <Directory Id="APPSFOLDER" Name="apps">
+          <Directory Id="SERVICEFOLDER" Name="Service" />
+        </Directory>
+      </Directory>
+    </StandardDirectory>
+
+    <StandardDirectory Id="CommonAppDataFolder">
+      <Directory Id="PROGRAMDATAFOLDER" Name="NightGate">
+        <Directory Id="INSTALLERSTATEDIRECTORY" Name="installer-state" />
+      </Directory>
+    </StandardDirectory>
+
+    <StandardDirectory Id="System64Folder">
+      <Directory Id="WINDOWSPOWERSHELLFOLDER" Name="WindowsPowerShell">
+        <Directory Id="POWERSHELLV1FOLDER" Name="v1.0" />
+      </Directory>
+    </StandardDirectory>
+
+    <ComponentGroup Id="PublishedPayload" Directory="INSTALLFOLDER">
+      <Files Include="$(var.StageDir)\**"
+             Exclude="$(var.StageDir)\apps\Service\NightGate.Service.exe;$(var.StageDir)\apps\Service\appsettings.json;$(var.StageDir)\installer\Finalize-NightGateMsi.ps1" />
+    </ComponentGroup>
+
+    <Component Id="NightGateService" Directory="SERVICEFOLDER" Guid="*">
+      <File Id="NightGateServiceExe"
+            Source="$(var.StageDir)\apps\Service\NightGate.Service.exe"
+            KeyPath="yes" />
+      <ServiceInstall Id="NightGateServiceInstall"
+                      Name="NightGate.LocalService"
+                      DisplayName="NightGate 收尾服务"
+                      Description="保存夜间策略、例外令牌和隐私安全事件。"
+                      Type="ownProcess"
+                      Start="auto"
+                      ErrorControl="normal"
+                      Account="NT AUTHORITY\LocalService"
+                      Vital="yes" />
+      <ServiceControl Id="NightGateServiceControl"
+                      Name="NightGate.LocalService"
+                      Start="install"
+                      Stop="both"
+                      Remove="uninstall"
+                      Wait="yes" />
+    </Component>
+
+    <!-- The deferred action validates the target-machine Windows Installer
+         UserSID, rewrites this staged configuration, and applies exact
+         LocalService/selected-user ACLs before InstallServices. -->
+    <Component Id="NightGateServiceConfiguration" Directory="SERVICEFOLDER" Guid="*">
+      <File Id="NightGateServiceConfigurationFile"
+            Source="$(var.StageDir)\apps\Service\appsettings.json"
+            KeyPath="yes">
+        <util:PermissionEx User="SYSTEM" GenericAll="yes" />
+        <util:PermissionEx User="Administrators" GenericAll="yes" />
+        <util:PermissionEx User="NT AUTHORITY\LocalService" GenericRead="yes" />
+      </File>
+    </Component>
+
+    <Component Id="NightGateMsiFinalizeScript" Directory="INSTALLERFOLDER" Guid="*">
+      <File Id="NightGateMsiFinalizeScriptFile"
+            Source="$(var.StageDir)\installer\Finalize-NightGateMsi.ps1"
+            KeyPath="yes" />
+    </Component>
+
+    <!-- FinalizeNightGate writes and transactionally snapshots these values in
+         the installation-time SID's HKU hive (never the elevated/current HKCU):
+         Software\Microsoft\Windows\CurrentVersion\Run and
+         Software\Google\Chrome\NativeMessagingHosts\com.nightgate.host. -->
+
+    <CustomAction Id="PrepareInstallNightGate"
+                  Directory="POWERSHELLV1FOLDER"
+                  ExeCommand="&quot;[POWERSHELLV1FOLDER]powershell.exe&quot; -NoLogo -NoProfile -NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File &quot;[#NightGateMsiFinalizeScriptFile]&quot; -InstallPath &quot;[INSTALLFOLDER]\&quot; -DataPath &quot;[PROGRAMDATAFOLDER]\&quot; -ProductCode &quot;[ProductCode]&quot; -ProductVersion &quot;[ProductVersion]&quot; -Mode Prepare"
+                  Execute="deferred" Impersonate="no" Return="check" />
+    <CustomAction Id="PrepareUninstallNightGate"
+                  Directory="POWERSHELLV1FOLDER"
+                  ExeCommand="&quot;[POWERSHELLV1FOLDER]powershell.exe&quot; -NoLogo -NoProfile -NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File &quot;[#NightGateMsiFinalizeScriptFile]&quot; -InstallPath &quot;[INSTALLFOLDER]\&quot; -DataPath &quot;[PROGRAMDATAFOLDER]\&quot; -ProductCode &quot;[ProductCode]&quot; -ProductVersion &quot;[ProductVersion]&quot; -Mode Prepare"
+                  Execute="deferred" Impersonate="no" Return="check" />
+    <CustomAction Id="RollbackInstallNightGate"
+                  Directory="POWERSHELLV1FOLDER"
+                  ExeCommand="&quot;[POWERSHELLV1FOLDER]powershell.exe&quot; -NoLogo -NoProfile -NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File &quot;[#NightGateMsiFinalizeScriptFile]&quot; -InstallPath &quot;[INSTALLFOLDER]\&quot; -DataPath &quot;[PROGRAMDATAFOLDER]\&quot; -ProductCode &quot;[ProductCode]&quot; -ProductVersion &quot;[ProductVersion]&quot; -ExpectedOperation Install -Mode Rollback"
+                  Execute="rollback" Impersonate="no" Return="check" />
+    <CustomAction Id="RollbackUninstallNightGate"
+                  Directory="POWERSHELLV1FOLDER"
+                  ExeCommand="&quot;[POWERSHELLV1FOLDER]powershell.exe&quot; -NoLogo -NoProfile -NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File &quot;[#NightGateMsiFinalizeScriptFile]&quot; -InstallPath &quot;[INSTALLFOLDER]\&quot; -DataPath &quot;[PROGRAMDATAFOLDER]\&quot; -ProductCode &quot;[ProductCode]&quot; -ProductVersion &quot;[ProductVersion]&quot; -ExpectedOperation Uninstall -Mode Rollback"
+                  Execute="rollback" Impersonate="no" Return="check" />
+    <CustomAction Id="FinalizeNightGate"
+                  Directory="POWERSHELLV1FOLDER"
+                  ExeCommand="&quot;[POWERSHELLV1FOLDER]powershell.exe&quot; -NoLogo -NoProfile -NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File &quot;[#NightGateMsiFinalizeScriptFile]&quot; -InstallPath &quot;[INSTALLFOLDER]\&quot; -DataPath &quot;[PROGRAMDATAFOLDER]\&quot; -ProductCode &quot;[ProductCode]&quot; -ProductVersion &quot;[ProductVersion]&quot; -UserSid &quot;[UserSID]&quot; -Mode Install"
+                  Execute="deferred" Impersonate="no" Return="check" />
+    <CustomAction Id="UninstallNightGate"
+                  Directory="POWERSHELLV1FOLDER"
+                  ExeCommand="&quot;[POWERSHELLV1FOLDER]powershell.exe&quot; -NoLogo -NoProfile -NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File &quot;[#NightGateMsiFinalizeScriptFile]&quot; -InstallPath &quot;[INSTALLFOLDER]\&quot; -DataPath &quot;[PROGRAMDATAFOLDER]\&quot; -ProductCode &quot;[ProductCode]&quot; -ProductVersion &quot;[ProductVersion]&quot; -Mode Uninstall"
+                  Execute="deferred" Impersonate="no" Return="check" />
+    <CustomAction Id="CommitNightGate"
+                  Directory="POWERSHELLV1FOLDER"
+                  ExeCommand="&quot;[POWERSHELLV1FOLDER]powershell.exe&quot; -NoLogo -NoProfile -NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File &quot;[#NightGateMsiFinalizeScriptFile]&quot; -InstallPath &quot;[INSTALLFOLDER]\&quot; -DataPath &quot;[PROGRAMDATAFOLDER]\&quot; -ProductCode &quot;[ProductCode]&quot; -ProductVersion &quot;[ProductVersion]&quot; -Mode Commit"
+                  Execute="commit" Impersonate="no" Return="check" />
+
+    <InstallExecuteSequence>
+      <Custom Action="PrepareInstallNightGate" After="InstallFiles"
+              Condition="NOT REMOVE~=&quot;ALL&quot;" />
+      <Custom Action="RollbackInstallNightGate" After="PrepareInstallNightGate"
+              Condition="NOT REMOVE~=&quot;ALL&quot;" />
+      <Custom Action="PrepareUninstallNightGate" Before="RollbackUninstallNightGate"
+              Condition="REMOVE~=&quot;ALL&quot; AND NOT UPGRADINGPRODUCTCODE" />
+      <Custom Action="RollbackUninstallNightGate" Before="UninstallNightGate"
+              Condition="REMOVE~=&quot;ALL&quot; AND NOT UPGRADINGPRODUCTCODE" />
+      <Custom Action="FinalizeNightGate" Before="InstallServices"
+              Condition="NOT REMOVE~=&quot;ALL&quot;" />
+      <Custom Action="UninstallNightGate" Before="RemoveFiles"
+              Condition="REMOVE~=&quot;ALL&quot; AND NOT UPGRADINGPRODUCTCODE" />
+      <Custom Action="CommitNightGate" Before="InstallFinalize"
+              Condition="NOT REMOVE~=&quot;ALL&quot;" />
+    </InstallExecuteSequence>
+
+    <!-- Permanent keeps ProgramData and user history across upgrade/uninstall. -->
+    <Component Id="ProgramDataAcl" Directory="PROGRAMDATAFOLDER"
+               Guid="*" Permanent="yes" NeverOverwrite="yes">
+      <CreateFolder>
+        <util:PermissionEx User="SYSTEM" GenericAll="yes" />
+        <util:PermissionEx User="Administrators" GenericAll="yes" />
+        <util:PermissionEx User="NT AUTHORITY\LocalService"
+                           GenericRead="yes" GenericWrite="yes"
+                           CreateFile="yes" CreateChild="yes" />
+        <util:PermissionEx User="Users" GenericRead="yes" />
+      </CreateFolder>
+      <RegistryValue Root="HKLM" Key="Software\NightGate"
+                     Name="ProgramDataDirectory" Type="string"
+                     Value="[PROGRAMDATAFOLDER]" KeyPath="yes" />
+    </Component>
+
+    <!--
+      This non-permanent component makes RemoveFiles delete only the transient
+      transaction snapshot on a successful uninstall. Windows Installer saves
+      deleted files for rollback, so RollbackUninstallNightGate can still read
+      the snapshot if a later uninstall action fails. User data stays under the
+      separate permanent ProgramDataAcl component.
+    -->
+    <Component Id="RollbackSnapshotCleanup"
+               Directory="INSTALLERSTATEDIRECTORY"
+               Guid="B19C091A-1794-EA51-A267-874C0EC6B21E"
+               KeyPath="yes" Permanent="no">
+      <CreateFolder />
+      <RemoveFile Id="RemoveNightGateRollbackSnapshot"
+                  Name="rollback-snapshot.json" On="uninstall" />
+      <RemoveFile Id="RemoveNightGateLegacyMsiState"
+                  Name="msi-install-state.json"
+                  Directory="PROGRAMDATAFOLDER" On="uninstall" />
+    </Component>
+
+    <Component Id="C_NightGateStartMenuShortcut"
+               Directory="ProgramMenuFolder"
+               Guid="1CAAAF77-83FA-4356-A9DC-F11A68457702">
+      <Shortcut Id="NightGateStartMenuShortcut"
+                Name="收尾 NightGate"
+                Target="[INSTALLFOLDER]apps\Desktop\NightGate.Desktop.exe"
+                WorkingDirectory="INSTALLFOLDER"
+                Icon="NightGateProductIcon" />
+      <RegistryValue Id="R_NightGateStartMenuShortcut"
+                     Root="HKLM"
+                     Key="Software\NightGate\Installer"
+                     Name="StartMenuShortcut"
+                     Type="integer"
+                     Value="1"
+                     KeyPath="yes" />
+    </Component>
+
+    <Component Id="C_NightGateDesktopShortcut"
+               Directory="DesktopFolder"
+               Guid="10D5411C-2D2D-A459-A7E7-3F0C48333AED"
+               Condition="INSTALLDESKTOPSHORTCUT = 1">
+      <Shortcut Id="NightGateDesktopShortcut"
+                Name="收尾"
+                Target="[INSTALLFOLDER]apps\Desktop\NightGate.Desktop.exe"
+                WorkingDirectory="INSTALLFOLDER"
+                Icon="NightGateProductIcon" />
+      <RegistryValue Id="R_NightGateDesktopShortcut"
+                     Root="HKLM"
+                     Key="Software\NightGate\Installer"
+                     Name="DesktopShortcut"
+                     Type="integer"
+                     Value="1"
+                     KeyPath="yes" />
+    </Component>
+
+    <Feature Id="Complete" Title="收尾 NightGate" Level="1">
+      <ComponentGroupRef Id="PublishedPayload" />
+      <ComponentRef Id="NightGateService" />
+      <ComponentRef Id="NightGateServiceConfiguration" />
+      <ComponentRef Id="NightGateMsiFinalizeScript" />
+      <ComponentRef Id="ProgramDataAcl" />
+      <ComponentRef Id="RollbackSnapshotCleanup" />
+      <ComponentRef Id="C_NightGateStartMenuShortcut" />
+      <ComponentRef Id="C_NightGateDesktopShortcut" />
+    </Feature>
+  </Package>
+</Wix>

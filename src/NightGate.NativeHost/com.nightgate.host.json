@@ -1,0 +1,9 @@
+{
+  "name": "com.nightgate.host",
+  "description": "收尾 Chrome 网页保护本地桥接",
+  "path": "__NIGHTGATE_NATIVE_HOST_PATH__",
+  "type": "stdio",
+  "allowed_origins": [
+    "chrome-extension://eefgemhlhbdodhlgjmicnoifhclhdgmm/"
+  ]
+}

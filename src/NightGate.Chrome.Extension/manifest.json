@@ -1,0 +1,61 @@
+{
+  "manifest_version": 3,
+  "name": "收尾",
+  "version": "0.1.5",
+  "description": "让当前视频安心收尾，门禁后不再开启下一段娱乐。",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnI5BLJM0VyR6OogM9o1a8YEG06cQXMulZE8d7wZR+5XW+y0z/viJaAl8Y75HPLewgZdEXaXGvUrG9zVX5276Ko5KGQuN6cSRRXpNum6K6J3DLTyKqmLxYZHA3rk/eHo+FLIIkw5o3OtHqa/FUWLbw3CQkdUpergfiJrCuA5EnORVjau5+d1rSHZZ9c2KkmsfkrTmIuRHv5ZvpHjoXAjqz90+PwfFF4rbfDogFr/2Me2jsDytHxwb1cSRXyO1L6OEVtC14KsencLLv+qgjjr+ZUCpDJFITyamqn5sncUthXXysmVJd8j0WsXuFhWG6TS7w0WGFwpdTVN0jssVwNAlFQIDAQAB",
+  "background": {
+    "service_worker": "service-worker.js",
+    "type": "module"
+  },
+  "permissions": [
+    "nativeMessaging",
+    "storage",
+    "scripting",
+    "webNavigation",
+    "declarativeNetRequest",
+    "alarms"
+  ],
+  "optional_host_permissions": [
+    "http://bilibili.com/*",
+    "https://bilibili.com/*",
+    "http://*.bilibili.com/*",
+    "https://*.bilibili.com/*",
+    "http://iqiyi.com/*",
+    "https://iqiyi.com/*",
+    "http://*.iqiyi.com/*",
+    "https://*.iqiyi.com/*",
+    "http://netflix.com/*",
+    "https://netflix.com/*",
+    "http://*.netflix.com/*",
+    "https://*.netflix.com/*",
+    "http://v.qq.com/*",
+    "https://v.qq.com/*",
+    "http://*.v.qq.com/*",
+    "https://*.v.qq.com/*",
+    "http://youtube.com/*",
+    "https://youtube.com/*",
+    "http://*.youtube.com/*",
+    "https://*.youtube.com/*"
+  ],
+  "options_page": "options.html",
+  "action": {
+    "default_title": "收尾 · 网页保护"
+  },
+  "incognito": "spanning",
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["blocked.html", "finished.html", "styles.css"],
+      "matches": [
+        "http://bilibili.com/*", "https://bilibili.com/*", "http://*.bilibili.com/*", "https://*.bilibili.com/*",
+        "http://iqiyi.com/*", "https://iqiyi.com/*", "http://*.iqiyi.com/*", "https://*.iqiyi.com/*",
+        "http://netflix.com/*", "https://netflix.com/*", "http://*.netflix.com/*", "https://*.netflix.com/*",
+        "http://v.qq.com/*", "https://v.qq.com/*", "http://*.v.qq.com/*", "https://*.v.qq.com/*",
+        "http://youtube.com/*", "https://youtube.com/*", "http://*.youtube.com/*", "https://*.youtube.com/*"
+      ]
+    }
+  ]
+}

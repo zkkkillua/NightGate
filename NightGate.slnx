@@ -1,0 +1,11 @@
+<Solution>
+  <Project Path="src/NightGate.Core/NightGate.Core.csproj" />
+  <Project Path="src/NightGate.Desktop/NightGate.Desktop.csproj" />
+  <Project Path="src/NightGate.NativeHost/NightGate.NativeHost.csproj" />
+  <Project Path="src/NightGate.Protocol/NightGate.Protocol.csproj" />
+  <Project Path="src/NightGate.Service/NightGate.Service.csproj" />
+  <Project Path="tests/NightGate.Core.Tests/NightGate.Core.Tests.csproj" />
+  <Project Path="tests/NightGate.Desktop.Tests/NightGate.Desktop.Tests.csproj" />
+  <Project Path="tests/NightGate.NativeHost.Tests/NightGate.NativeHost.Tests.csproj" />
+  <Project Path="tests/NightGate.Service.Tests/NightGate.Service.Tests.csproj" />
+</Solution>

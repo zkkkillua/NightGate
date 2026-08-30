@@ -1,0 +1,48 @@
+# Local tools, assistant state, historical work notes and downloaded runtimes.
+/work/
+/outputs/
+/artifacts/
+/.agents/
+/.codex/
+/.superpowers/
+/docs/superpowers/
+
+# IDE and build output (including WPF temporary projects written beside sources).
+.vs/
+.idea/
+**/bin/
+**/obj/
+**/*_wpftmp.csproj
+**/node_modules/
+TestResults/
+**/TestResults/
+*.user
+*.suo
+*.nupkg
+*.snupkg
+*.binlog
+
+# Machine/user state, credentials, logs and generated distribution packages.
+.env
+.env.*
+!.env.example
+*.pfx
+*.p12
+*.key
+*.pem
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.log
+*.trx
+*.dmp
+*.msi
+*.cab
+*.zip
+
+# OS metadata.
+Thumbs.db
+Desktop.ini
+.DS_Store

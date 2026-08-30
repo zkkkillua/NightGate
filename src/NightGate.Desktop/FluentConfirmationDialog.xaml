@@ -1,0 +1,76 @@
+<Window x:Class="NightGate.Desktop.FluentConfirmationDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="{Binding Title}"
+        Width="540"
+        SizeToContent="Height"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ShowInTaskbar="False"
+        WindowStartupLocation="CenterOwner"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True"
+        KeyboardNavigation.TabNavigation="Cycle"
+        AutomationProperties.Name="{Binding Title}">
+    <Border Margin="18"
+            Padding="28"
+            Style="{StaticResource CardStyle}"
+            CornerRadius="18"
+            Background="{StaticResource AppBackgroundBrush}"
+            BorderBrush="{StaticResource AccentBrush}"
+            BorderThickness="1">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <StackPanel Grid.Row="0">
+                <TextBlock Text="{Binding Title}"
+                           FontSize="24"
+                           FontWeight="SemiBold"
+                           Foreground="{StaticResource PrimaryTextBrush}"
+                           TextWrapping="Wrap" />
+                <Border Margin="0,16,0,0"
+                        Padding="16,14"
+                        CornerRadius="12"
+                        Background="{StaticResource WarningCardBrush}">
+                    <TextBlock Text="{Binding Message}"
+                               FontSize="15"
+                               LineHeight="23"
+                               Foreground="{StaticResource PrimaryTextBrush}"
+                               TextWrapping="Wrap" />
+                </Border>
+            </StackPanel>
+
+            <TextBlock Grid.Row="1"
+                       Margin="0,14,0,0"
+                       Text="Enter 确认 · Esc 取消"
+                       Foreground="{StaticResource SecondaryTextBrush}"
+                       FontSize="12" />
+
+            <StackPanel Grid.Row="2"
+                        Margin="0,22,0,0"
+                        HorizontalAlignment="Right"
+                        Orientation="Horizontal">
+                <Button x:Name="CancelButton"
+                        MinWidth="112"
+                        Margin="0,0,10,0"
+                        Style="{StaticResource SecondaryButtonStyle}"
+                        Content="{Binding CancelText}"
+                        IsCancel="True"
+                        AutomationProperties.Name="取消确认" />
+                <Button x:Name="ConfirmButton"
+                        MinWidth="148"
+                        Style="{StaticResource DangerButtonStyle}"
+                        Content="{Binding ConfirmText}"
+                        IsDefault="True"
+                        Click="Confirm_Click"
+                        AutomationProperties.Name="{Binding ConfirmText}" />
+            </StackPanel>
+        </Grid>
+    </Border>
+</Window>

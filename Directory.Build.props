@@ -1,0 +1,13 @@
+<Project>
+  <PropertyGroup>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Deterministic>true</Deterministic>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <Version>0.3.17</Version>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <!-- 1.x deliberately outranks the legacy payloads that defaulted to 1.0.0.0. -->
+    <FileVersion>1.3.17.0</FileVersion>
+    <InformationalVersion>0.3.17</InformationalVersion>
+  </PropertyGroup>
+</Project>

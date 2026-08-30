@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>收尾 · 网页保护</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="card wide">
+    <p class="eyebrow">收尾</p>
+    <h1>网页保护</h1>
+    <p class="lead">勾选与“收尾”桌面端相同的娱乐网站，再点“保存并授权”。页面地址、标题和播放来源不会被保存。</p>
+    <section class="status" aria-live="polite">
+      <span class="dot" aria-hidden="true"></span>
+      <span id="status">正在检查…</span>
+    </section>
+    <form id="site-form">
+      <fieldset>
+        <legend>要保护的网站</legend>
+        <div id="site-list" class="site-list"></div>
+      </fieldset>
+      <button type="submit">保存并授权</button>
+      <p class="muted">Chrome 出现权限确认时请选择“允许”。保存后会立即重新检查保护策略，无需等待 30 秒。</p>
+      <p id="save-result" class="muted" aria-live="polite"></p>
+    </form>
+    <aside>
+      <h2>隐身模式</h2>
+      <p id="incognito">正在检查…</p>
+      <p class="muted">扩展只会报告是否受到保护，不会替你更改 Chrome 的隐身设置。</p>
+    </aside>
+  </main>
+  <script type="module" src="options.js"></script>
+</body>
+</html>

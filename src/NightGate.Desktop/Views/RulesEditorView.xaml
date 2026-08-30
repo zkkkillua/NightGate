@@ -1,0 +1,379 @@
+<UserControl x:Class="NightGate.Desktop.Views.RulesEditorView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             AutomationProperties.Name="程序与娱乐网站规则编辑器"
+             UseLayoutRounding="True"
+             SnapsToDevicePixels="True">
+    <StackPanel IsEnabled="{Binding CanEditRules}">
+        <TextBlock Text="游戏与语音程序"
+                   FontSize="20"
+                   FontWeight="SemiBold" />
+        <TextBlock Margin="0,5,0,14"
+                   Foreground="{StaticResource SecondaryTextBrush}"
+                   Text="门禁前已运行的游戏可以善后；门禁后新开的受限游戏会先请求正常退出。每个游戏的最后开局时间，会按典型一局时长从锁屏时间自动前移。"
+                   TextWrapping="Wrap" />
+
+        <Border Margin="0,0,0,16"
+                Style="{StaticResource CardStyle}"
+                Background="{StaticResource InfoCardBrush}">
+            <StackPanel>
+                <DockPanel>
+                    <Button DockPanel.Dock="Right"
+                            Margin="12,0,0,0"
+                            VerticalAlignment="Top"
+                            Style="{StaticResource SecondaryButtonStyle}"
+                            Content="重新扫描"
+                            Command="{Binding ScanInstalledGamesCommand}"
+                            IsEnabled="{Binding CanScanInstalledGames}"
+                            AutomationProperties.Name="重新扫描本机已安装游戏" />
+                    <StackPanel>
+                        <TextBlock Text="自动发现本机游戏"
+                                   FontSize="18"
+                                   FontWeight="SemiBold" />
+                        <TextBlock Margin="0,3,0,0"
+                                   Foreground="{StaticResource SecondaryTextBrush}"
+                                   Text="读取当前的 Steam、Epic、Xbox 安装清单和常见游戏目录；不联网，也不会启动游戏。"
+                                   TextWrapping="Wrap" />
+                    </StackPanel>
+                </DockPanel>
+                <ProgressBar Margin="0,12,0,0"
+                             Height="4"
+                             IsIndeterminate="True"
+                             Visibility="{Binding IsGameDiscoveryInFlight, Converter={StaticResource BooleanToVisibilityConverter}}"
+                             AutomationProperties.Name="正在扫描游戏" />
+                <TextBlock Margin="0,10,0,0"
+                           Text="{Binding GameDiscoveryStatusText}"
+                           Foreground="{StaticResource SecondaryTextBrush}"
+                           TextWrapping="Wrap"
+                           AutomationProperties.LiveSetting="Polite" />
+                <ListBox Margin="0,10,0,0"
+                         MaxHeight="420"
+                         ItemsSource="{Binding DiscoveredGames}"
+                         Style="{StaticResource RuleRowListBoxStyle}"
+                         ScrollViewer.VerticalScrollBarVisibility="Auto"
+                         ScrollViewer.CanContentScroll="True"
+                         VirtualizingPanel.IsVirtualizing="True"
+                         VirtualizingPanel.VirtualizationMode="Recycling"
+                         PreviewMouseWheel="VirtualizedGameList_PreviewMouseWheel"
+                         AutomationProperties.Name="自动发现的游戏">
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem"
+                                   BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                                <Setter Property="Padding" Value="0" />
+                                <Setter Property="Margin" Value="0" />
+                                <Setter Property="Background" Value="Transparent" />
+                                <Setter Property="BorderThickness" Value="0" />
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                <Setter Property="IsTabStop" Value="False" />
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Border Margin="0,0,0,8"
+                                        Padding="12,10"
+                                        CornerRadius="10"
+                                        Background="{StaticResource CardBackgroundBrush}"
+                                        BorderBrush="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                                        BorderThickness="1">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <CheckBox Grid.Column="0"
+                                                  Margin="0,0,12,0"
+                                                  VerticalAlignment="Top"
+                                                  IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                                  IsEnabled="{Binding CanSelect}"
+                                                  Style="{StaticResource ChecklistItemStyle}"
+                                                  ToolTip="{Binding DisplayName, StringFormat=添加 {0}}"
+                                                  AutomationProperties.Name="{Binding DisplayName, StringFormat=选择 {0}}" />
+                                        <StackPanel Grid.Column="1">
+                                            <DockPanel LastChildFill="True">
+                                                <StackPanel DockPanel.Dock="Right"
+                                                            Margin="14,0,0,0">
+                                                    <TextBlock Text="典型一局"
+                                                               FontSize="11"
+                                                               Foreground="{StaticResource SecondaryTextBrush}" />
+                                                    <ComboBox Margin="0,3,0,0"
+                                                              ItemsSource="{Binding SessionMinuteOptions}"
+                                                              SelectedItem="{Binding SessionMinutes, Mode=TwoWay}"
+                                                              IsEnabled="{Binding CanSelect}"
+                                                              Style="{StaticResource InlineDurationComboBoxStyle}"
+                                                              AutomationProperties.Name="{Binding DisplayName, StringFormat={}{0}典型一局时长}"
+                                                              AutomationProperties.HelpText="勾选后会在添加时使用这一局时长">
+                                                        <ComboBox.ItemTemplate>
+                                                            <DataTemplate>
+                                                                <TextBlock Text="{Binding StringFormat={}{0} 分钟}" />
+                                                            </DataTemplate>
+                                                        </ComboBox.ItemTemplate>
+                                                    </ComboBox>
+                                                </StackPanel>
+                                                <TextBlock Text="{Binding DisplayName}"
+                                                           FontWeight="SemiBold"
+                                                           FontSize="15"
+                                                           TextWrapping="Wrap" />
+                                            </DockPanel>
+                                            <TextBlock Margin="0,3,0,0"
+                                                       Text="{Binding ExecutablePath}"
+                                                       Foreground="{StaticResource SecondaryTextBrush}"
+                                                       FontSize="12"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       ToolTip="{Binding ExecutablePath}" />
+                                            <WrapPanel Margin="0,8,0,0">
+                                                <Border Style="{StaticResource StatusPillStyle}">
+                                                    <TextBlock Text="{Binding SourceText}" FontSize="12" />
+                                                </Border>
+                                                <Border Margin="6,0,0,0"
+                                                        Style="{StaticResource StatusPillStyle}">
+                                                    <TextBlock Text="{Binding SelectionStatusText}" FontSize="12" />
+                                                </Border>
+                                            </WrapPanel>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                <Grid Margin="0,4,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Button Grid.Column="0"
+                            Style="{StaticResource PrimaryButtonStyle}"
+                            Content="添加勾选的游戏"
+                            Command="{Binding AddSelectedDiscoveredGamesCommand}"
+                            IsEnabled="{Binding CanAddSelectedDiscoveredGames}"
+                            AutomationProperties.Name="把勾选的自动发现游戏加入保护规则" />
+                    <TextBlock Grid.Column="1"
+                               Margin="12,0,0,0"
+                               VerticalAlignment="Center"
+                               Foreground="{StaticResource SecondaryTextBrush}"
+                               Text="扫描结果不会自动保存；Steam 候选建议核对路径。"
+                               TextWrapping="Wrap" />
+                </Grid>
+            </StackPanel>
+        </Border>
+
+        <WrapPanel Margin="0,0,0,10">
+            <Label Content="手动添加时一_局"
+                   Target="{Binding ElementName=GameDuration}"
+                   VerticalContentAlignment="Center" />
+            <ComboBox x:Name="GameDuration"
+                      Width="112"
+                      Style="{StaticResource ChoiceComboBoxStyle}"
+                      ItemsSource="{Binding GameSessionMinuteOptions}"
+                      SelectedItem="{Binding SelectedGameSessionMinutes, Mode=TwoWay}"
+                      AutomationProperties.Name="手动添加游戏的默认典型一局时长"
+                      TabIndex="0" />
+            <TextBlock Margin="6,0,0,0"
+                       VerticalAlignment="Center"
+                       Text="分钟" />
+            <Button Margin="12,0,0,0"
+                    Style="{StaticResource SecondaryButtonStyle}"
+                    Content="手动选择游戏 exe…"
+                    Click="AddGame_Click"
+                    AutomationProperties.Name="选择游戏可执行文件"
+                    TabIndex="1" />
+            <Button Margin="8,0,0,0"
+                    Style="{StaticResource SecondaryButtonStyle}"
+                    Content="添加_语音工具…"
+                    Click="AddVoice_Click"
+                    AutomationProperties.Name="选择语音通信程序"
+                    TabIndex="2" />
+        </WrapPanel>
+
+        <TextBlock Margin="0,6,0,0"
+                   Text="已加入保护的程序"
+                   FontSize="18"
+                   FontWeight="SemiBold" />
+        <TextBlock Margin="0,4,0,10"
+                   Foreground="{StaticResource SecondaryTextBrush}"
+                   Text="每个游戏都可在所在行直接修改一局时长；点击整行可选择它，再添加辅助程序或移除。"
+                   TextWrapping="Wrap" />
+        <ListBox ItemsSource="{Binding ConfiguredApps}"
+                 MaxHeight="420"
+                 SelectedItem="{Binding SelectedAppRule, Mode=TwoWay}"
+                 Style="{StaticResource RuleRowListBoxStyle}"
+                 ItemContainerStyle="{StaticResource RuleRowListBoxItemStyle}"
+                 PreviewMouseWheel="VirtualizedGameList_PreviewMouseWheel"
+                 ScrollViewer.VerticalScrollBarVisibility="Auto"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                 ScrollViewer.CanContentScroll="True"
+                 VirtualizingPanel.IsVirtualizing="True"
+                 VirtualizingPanel.VirtualizationMode="Recycling"
+                 AutomationProperties.Name="已选择的程序规则，每个游戏可在行内修改一局时长"
+                 TabIndex="3">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Row="0"
+                                    Grid.Column="0"
+                                    Margin="0,0,14,0"
+                                    VerticalAlignment="Center">
+                            <TextBlock Text="{Binding Name}"
+                                       FontWeight="SemiBold"
+                                       FontSize="15"
+                                       TextTrimming="CharacterEllipsis"
+                                       ToolTip="{Binding Name}" />
+                            <TextBlock Margin="0,3,0,0"
+                                       Text="{Binding CategoryText}"
+                                       FontSize="12"
+                                       Foreground="{StaticResource SecondaryTextBrush}" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="0"
+                                    Grid.Column="1"
+                                    Visibility="{Binding IsGame, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <TextBlock Text="典型一局"
+                                       FontSize="11"
+                                       Foreground="{StaticResource SecondaryTextBrush}" />
+                            <ComboBox Margin="0,3,0,0"
+                                      ItemsSource="{Binding SessionMinuteOptions}"
+                                      SelectedItem="{Binding SessionMinutes, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                      Style="{StaticResource InlineDurationComboBoxStyle}"
+                                      AutomationProperties.Name="修改此游戏的典型一局时长"
+                                      AutomationProperties.HelpText="选择后会在保存规则时一起提交">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding StringFormat={}{0} 分钟}" />
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                        </StackPanel>
+
+                        <TextBlock Grid.Row="0"
+                                   Grid.Column="1"
+                                   VerticalAlignment="Center"
+                                   Text="团队救场时可用"
+                                   Foreground="{StaticResource SecondaryTextBrush}">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsGame}" Value="False">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+
+                        <TextBlock Grid.Row="1"
+                                   Grid.ColumnSpan="2"
+                                   Margin="0,8,0,0"
+                                   Text="{Binding RootExecutablePath}"
+                                   FontSize="12"
+                                   Foreground="{StaticResource SecondaryTextBrush}"
+                                   TextTrimming="CharacterEllipsis"
+                                   ToolTip="{Binding RootExecutablePath}" />
+
+                        <StackPanel Grid.Row="2"
+                                    Grid.ColumnSpan="2"
+                                    Margin="0,10,0,0">
+                            <StackPanel.Style>
+                                <Style TargetType="StackPanel">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HelperExecutablePaths.Count}"
+                                                     Value="0">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </StackPanel.Style>
+                            <TextBlock Text="关联辅助程序"
+                                       FontSize="12"
+                                       FontWeight="SemiBold"
+                                       Foreground="{StaticResource SecondaryTextBrush}" />
+                            <ItemsControl Margin="0,5,0,0"
+                                          ItemsSource="{Binding HelperExecutablePaths}"
+                                          AutomationProperties.Name="这个程序的关联辅助程序">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Margin="0,0,0,5"
+                                                Padding="10,5"
+                                                CornerRadius="8"
+                                                Background="{StaticResource InfoCardBrush}">
+                                            <DockPanel LastChildFill="True">
+                                                <Button DockPanel.Dock="Right"
+                                                        Margin="10,0,0,0"
+                                                        Padding="8,3"
+                                                        MinHeight="30"
+                                                        Style="{StaticResource TextButtonStyle}"
+                                                        Content="移除"
+                                                        Click="RemoveHelper_Click"
+                                                        Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType={x:Type ListBoxItem}}}"
+                                                        AutomationProperties.Name="移除这个关联辅助程序" />
+                                                <TextBlock VerticalAlignment="Center"
+                                                           Text="{Binding}"
+                                                           FontSize="12"
+                                                           TextTrimming="CharacterEllipsis"
+                                                           ToolTip="{Binding}" />
+                                            </DockPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Grid>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+        <WrapPanel Margin="0,2,0,0">
+            <Button Style="{StaticResource SecondaryButtonStyle}"
+                    Content="添加关联_辅助程序…"
+                    Click="AddHelper_Click"
+                    IsEnabled="{Binding CanEditSelectedAppRule}"
+                    AutomationProperties.Name="为所选程序添加关联辅助程序"
+                    TabIndex="4" />
+            <Button Margin="8,0,0,0"
+                    Style="{StaticResource TextButtonStyle}"
+                    Content="移除所选程序"
+                    Click="RemoveApp_Click"
+                    IsEnabled="{Binding CanEditSelectedAppRule}"
+                    AutomationProperties.Name="移除所选程序规则"
+                    TabIndex="5" />
+        </WrapPanel>
+
+        <Separator Margin="0,22,0,20" />
+
+        <TextBlock Text="娱乐网站"
+                   FontSize="20"
+                   FontWeight="SemiBold" />
+        <TextBlock Margin="0,5,0,10"
+                   Foreground="{StaticResource SecondaryTextBrush}"
+                   Text="只检查你勾选的网站类别；不保存页面标题、完整网址或浏览历史。"
+                   TextWrapping="Wrap" />
+        <ItemsControl ItemsSource="{Binding SiteSelections}"
+                      AutomationProperties.Name="娱乐网站类别">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <CheckBox Style="{StaticResource ChecklistItemStyle}"
+                              IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                              Content="{Binding DisplayName}"
+                              AutomationProperties.Name="{Binding DisplayName}" />
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        <Button Margin="0,12,0,0"
+                HorizontalAlignment="Left"
+                Style="{StaticResource PrimaryButtonStyle}"
+                Content="_保存程序与网站规则"
+                Command="{Binding SaveRulesCommand}"
+                IsEnabled="{Binding CanSaveRules}"
+                AutomationProperties.Name="保存程序与网站规则"
+                TabIndex="6" />
+    </StackPanel>
+</UserControl>
