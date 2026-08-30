@@ -794,7 +794,7 @@ test('one stable MSI identity renders a literal authored-only WiX release source
 test('packaging and verification cross-check authored WiX identity without claiming compilation', async () => {
   const packageScript = await read('scripts/Package.ps1');
   const verify = await read('scripts/Verify.ps1');
-  const readme = await read('README.md');
+  const operations = await read('docs/OPERATIONS.md');
   for (const field of ['ProductVersion', 'ProductCode', 'UpgradeCode']) {
     assert.match(packageScript, new RegExp(`wixIdentity\\.${field}`, 'i'));
     assert.match(packageScript, new RegExp(`msiIdentity\\.${field}`, 'i'));
@@ -804,8 +804,8 @@ test('packaging and verification cross-check authored WiX identity without claim
   assert.match(verify, /wixSourceStatus/i);
   assert.match(verify, /wixSourceCompiled/i);
   assert.match(verify, /authored-only; not compiled/i);
-  assert.match(readme, /authored-only/i);
-  assert.match(readme, /未编译|没有编译/i);
+  assert.match(operations, /authored-only/i);
+  assert.match(operations, /未编译|没有编译/i);
 });
 
 test('WiX source declares x64 per-machine upgrade, LocalService, logon, ACL, and native host registration', async () => {
@@ -846,7 +846,7 @@ test('MSI publication is SID-bound and has a native Windows Installer authoring 
   const msiBuilder = await read('scripts/New-NightGateMsi.ps1');
   const msiFinalize = await read('installer/Finalize-NightGateMsi.ps1');
   const verify = await read('scripts/Verify.ps1');
-  const readme = await read('README.md');
+  const operations = await read('docs/OPERATIONS.md');
   assert.match(packageScript, /msiTargetSidContractImplemented\s*=\s*\$true/i);
   assert.match(packageScript, /New-NightGateMsi\.ps1/i);
   assert.match(packageScript, /targetInteractiveSidContractImplemented/i);
@@ -870,7 +870,7 @@ test('MSI publication is SID-bound and has a native Windows Installer authoring 
   assert.match(msiFinalize, /LocalService/i);
   assert.match(verify, /targetInteractiveSidContractImplemented/i);
   assert.match(verify, /MSI[^\r\n]+target[^\r\n]+SID/i);
-  assert.match(readme, /MSI[\s\S]{0,220}UserSID/i);
+  assert.match(operations, /MSI[\s\S]{0,220}UserSID/i);
 });
 
 test('MSI PowerShell transaction actions carry complete hidden commands directly', async () => {
@@ -2180,6 +2180,37 @@ test('Chinese README states purpose, recovery, privacy, device guidance, limitat
     '手工验收',
   ]) {
     assert.ok(readme.includes(required), `README missing: ${required}`);
+  }
+});
+
+test('project documentation links resolve and detailed release safeguards remain discoverable', async () => {
+  const documents = ['README.md', 'docs/DEVELOPMENT.md', 'docs/OPERATIONS.md'];
+  const readme = await read(documents[0]);
+  for (const target of documents.slice(1)) {
+    assert.ok(readme.includes(`https://github.com/zkkkillua/NightGate/blob/main/${target}`));
+  }
+  for (const document of documents) {
+    const content = await read(document);
+    const links = content.matchAll(/(?:href|src)="([^"]+)"|!?\[[^\]]*\]\(([^)\s]+)\)/g);
+    for (const match of links) {
+      const url = match[1] ?? match[2];
+      let target;
+      const repositoryPath = url.match(/^https:\/\/github\.com\/zkkkillua\/NightGate\/(?:blob|tree)\/main\/(.+)$/)?.[1]
+        ?? url.match(/^https:\/\/raw\.githubusercontent\.com\/zkkkillua\/NightGate\/main\/(.+)$/)?.[1];
+      if (repositoryPath) {
+        target = path.join(repo, decodeURIComponent(repositoryPath.split('#')[0]));
+      } else if (!/^(?:[a-z][a-z0-9+.-]*:|#)/i.test(url)) {
+        target = path.resolve(repo, path.dirname(document), decodeURIComponent(url.split('#')[0]));
+      }
+      if (target) {
+        const entry = await stat(target);
+        assert.ok(entry.isFile() || entry.isDirectory(), `${document}: missing link ${url}`);
+      }
+    }
+  }
+  const development = await read('docs/DEVELOPMENT.md');
+  for (const safeguard of ['self-contained', 'dotnet nuget verify --all', 'releaseEligible=false', '手工验收']) {
+    assert.ok(development.includes(safeguard), `development guide missing: ${safeguard}`);
   }
 });
 
